@@ -40,7 +40,7 @@ module "iam_gha_my_portfolio" {
       Principal = { Federated = data.terraform_remote_state.oidc.outputs.oidc.oidc_arn }
       Condition = {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
-        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/devops-portfolio:ref:refs/heads/main" }
+        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/my-portfolio:ref:refs/heads/main" }
       }
     }]
   })
