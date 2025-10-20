@@ -77,9 +77,9 @@ module "iam_gha_my_portfolio" {
         Effect: "Allow"
         Action: ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
         Resource: [
-          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/ssh/controller-*",
-          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller_host-*",
-          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller_user-*"
+          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/ssh_key_priv-*",
+          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/host-*",
+          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/user-*"
         ]
       }
     ]
