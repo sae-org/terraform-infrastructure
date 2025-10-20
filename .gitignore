@@ -1,0 +1,45 @@
+# --- Terraform core ---
+.terraform/                  
+*.tfstate
+*.tfstate.*
+terraform.tfstate.d/
+crash.log
+crash.*.log
+*.tfplan
+*.plan
+plan.out
+
+
+# Local override files (never commit)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+
+# --- Credentials & env files ---
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+*.keystore
+
+# If you ever drop temp AWS creds in-repo paths
+.aws/
+.aws-sso/
+
+# --- OS / Editor noise ---
+.DS_Store
+Thumbs.db
+
+# VS Code / JetBrains
+.vscode/
+.idea/
+
+# Logs & temp
+*.log
+*.tmp
+*.swp
