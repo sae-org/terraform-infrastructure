@@ -20,7 +20,7 @@ provider "aws" {
 
 module "acm" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/acm?ref=main"
-  acm_domains = ["*.saeeda.me"]
+  acm_domains = ["*.saeeda.me", "saeeda.me"]
   validation_method = "DNS"
 }
 

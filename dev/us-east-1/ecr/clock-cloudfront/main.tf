@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket       = "sae-s3-terraform-backend"          
-    key          = "dev/us-east-1/ecr/my-portfolio/terraform.tfstate" 
+    key          = "dev/us-east-1/ecr/clock-cloudfront/terraform.tfstate" 
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true                           
@@ -20,7 +20,5 @@ provider "aws" {
 
 module "ecr" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/ecr?ref=main"
-  proj_prefix = "my-portfolio-dev"
-  image_tag = "dev"
+  proj_prefix = "clock-cloudfront-dev"
 }
-

@@ -24,6 +24,7 @@ module "ec2" {
   environment = "dev"
   region = "us-east-1"
   count = 1
+  private_ins = false
   ins_type = "t2.micro"
   ami = "ami-020cba7c55df1f615"
   ec2_sg_id = [module.ansible_sg.sg_id]

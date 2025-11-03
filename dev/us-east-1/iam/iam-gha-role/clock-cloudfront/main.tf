@@ -1,11 +1,12 @@
 terraform {
   backend "s3" {
-    bucket       = "sae-s3-terraform-backend"          
-    key          = "dev/us-east-1/iam/iam-gha-role/my-portfolio/terraform.tfstate" 
+    bucket       = "sae-s3-terraform-backend"
+    key          = "dev/us-east-1/iam/iam-gha-role/clock-cloudfront/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
-    use_lockfile = true                           
+    use_lockfile = true
   }
+
   required_providers {
     aws = {
       source = "hashicorp/aws"
@@ -14,7 +15,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
   profile = "tf"
 }
 
@@ -23,17 +24,16 @@ data "aws_caller_identity" "current" {}
 locals {
   region     = "us-east-1"
   account_id = data.aws_caller_identity.current.account_id
-  ecr_repo   = data.terraform_remote_state.ecr.outputs.ecr.ecr_repo_name
+  ecr_repo = data.terraform_remote_state.ecr.outputs.ecr.ecr_repo_name
   execution_role_arn   = data.terraform_remote_state.iam.outputs.iam.role_arn
   task_role_arn       = data.terraform_remote_state.iam.outputs.iam.role_arn
 }
 
-module "iam_gha_my_portfolio" {
+module "iam_gha_clock_cloudfront" {
   source         = "git::https://github.com/sae-org/terraform-modules.git//modules/iam?ref=main"
-  proj_prefix    = "gha-my-portfolio"
+  proj_prefix    = "gha-clock-cloudfront"
   create_profile = false
 
-  # OIDC trust (jsonencoded map; NO HCL blocks inside)
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -42,12 +42,11 @@ module "iam_gha_my_portfolio" {
       Principal = { Federated = data.terraform_remote_state.oidc.outputs.oidc.oidc_arn }
       Condition = {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
-        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/my-portfolio:ref:refs/heads/main" }
+        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/clock-cloudfront-cache:ref:refs/heads/main" }
       }
     }]
   })
 
-  # Inline policy kept in the SAME module call (your EC2 pattern)
   role_policy = jsonencode({
     Version   = "2012-10-17",
     Statement = [
@@ -131,25 +130,10 @@ module "iam_gha_my_portfolio" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ],
-        Resource = "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:cicd/my-portfolio-*"
-      }, 
-
-      {
-			"Sid": "Statement3",
-			"Effect": "Allow",
-			"Action": [
-				"logs:*"
-			],
-			"Resource": "arn:aws:logs:us-east-1:886687538523:log-group:/ecs/my-portfolio-dev:*"
-		},
-		{
-			"Sid": "Statement4",
-			"Effect": "Allow",
-			"Action": [
-				"s3:Get*"
-			],
-			"Resource": "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/iam/ecs-role/terraform.tfstate"
-		}
+        Resource = "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:cicd/clock-cloudfront-*"
+      }
     ]
   })
 }
+
+

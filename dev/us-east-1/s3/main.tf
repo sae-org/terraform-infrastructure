@@ -22,4 +22,5 @@ module "s3" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/s3?ref=main"
   kms_key_arn = module.kms.kms_key_arn
   users = ["Saeeda", "terraform"]
+  roles = ["gha-my-portolio-iam-role", "gha-clock-cloudfront-iam-role"]
 }

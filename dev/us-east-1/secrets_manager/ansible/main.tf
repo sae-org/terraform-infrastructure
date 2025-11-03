@@ -26,11 +26,12 @@ locals {
     "ansible/controller/ssh_key_priv"             = data.terraform_remote_state.ec2_ansible.outputs.ec2[0].private_key_pem
     "ansible/controller/host"                     = data.terraform_remote_state.ec2_ansible.outputs.ec2[0].public_ip[0]
     "ansible/controller/user"                     = "ubuntu"
-    "ansible/managed_hosts_ssh_keys/my_portfolio" = data.terraform_remote_state.ec2_my_portfolio.outputs.ec2[0].private_key_pem
+    "ansible/managed_hosts_ssh_keys/my-portfolio" = data.terraform_remote_state.ec2_my_portfolio.outputs.ec2[0].private_key_pem
+    "ansible/managed_hosts_ssh_keys/clock-cloudfront" = data.terraform_remote_state.asg.outputs.asg.private_key_pem
   }
 }
 
-module "ansible_secrets" {
+module "secrets" {
   source        = "git::https://github.com/sae-org/terraform-modules.git//modules/secrets_manager?ref=main"
   for_each      = local.secrets_map
   secret_name   = each.key

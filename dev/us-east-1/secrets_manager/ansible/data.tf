@@ -24,3 +24,12 @@ data "terraform_remote_state" "ecr" {
     region = "us-east-1"
   }
 }
+
+data "terraform_remote_state" "asg" {
+  backend = "s3"
+  config = {
+    bucket = "sae-s3-terraform-backend"
+    key    = "dev/us-east-1/asg/clock-cloudfront/terraform.tfstate"
+    region = "us-east-1"
+  }
+}

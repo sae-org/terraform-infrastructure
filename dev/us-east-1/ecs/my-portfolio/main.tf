@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket       = "sae-s3-terraform-backend"          
-    key          = "dev/us-east-1/ec2/my-portfolio/terraform.tfstate" 
+    key          = "dev/us-east-1/ecs/my-portfolio/terraform.tfstate" 
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true                           
@@ -12,33 +12,42 @@ terraform {
     }
   }
 }
+
 provider "aws" {
   region = "us-east-1"
-  profile = "tf"
 }
-module "ec2" {
-  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/ec2?ref=main"
+
+module "ecs" {
+  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/ecs?ref=main"
   proj_prefix = "my-portfolio-dev"
-  environment = "dev"
-  region = "us-east-1"
-  count = 1
-  ins_type = "t2.micro"
-  ami = "ami-020cba7c55df1f615"
-  ec2_sg_id = [module.ec2_sg.sg_id]
-  iam_ins_profile = "my-portfolio-dev-profile"
-  associate_pub_ip = false
+  execution_role_arn = data.terraform_remote_state.iam.outputs.iam.role_arn
+  task_role_arn = data.terraform_remote_state.iam.outputs.iam.role_arn
+  image_uri = "${data.terraform_remote_state.ecr.outputs.ecr.image_uri}:${var.image_tag}"
+  app_port = 80
+  env_vars = [
+    { name = "APP_ENV",          value = "dev" },
+    { name = "PORT",             value = "8080" },   # keep in sync with app_port
+    { name = "AWS_REGION",       value = "us-east-1" },
+    { name = "HEALTHCHECK_PATH", value = "/healthz" },
+    { name = "LOG_LEVEL",        value = "info" }
+  ]
+  aws_region = "us-east-1"
+  private_subnet_ids = data.terraform_remote_state.vpc.outputs.vpc.pri_sub_id
+  svc_sg_id = module.ecs_svc_sg.sg_id
+  tg_arn = module.alb.tg_arns[0]
 }
+
 module "alb" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/lb?ref=main"
-  proj_prefix = "my-portfolio-dev"
-  create_tg_attachment = true 
+  proj_prefix = "my-portfolio-dev-ecs"
+  create_tg_attachment = false
   environment = "dev"
   region = "us-east-1"
   internal = false 
   lb_type = "application" 
-  security_groups = [module.sg_alb.sg_id]
+  target_type = "ip"
+  security_groups = [module.ecs_alb_sg.sg_id]
   cert_name = "saeeda.me"
-  target_id = module.ec2[0].instance_ids[0]
   listener_ports = [
     { port = 80, protocol = "HTTP" },
     { port = 443, protocol = "HTTPS" }
@@ -46,43 +55,15 @@ module "alb" {
   tg_ports = [
     { port = 80, protocol = "HTTP" }
   ]
+  target_port = 80
 }
-module "ec2_sg" {
+
+module "ecs_alb_sg" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/sg?ref=main"
-  proj_prefix = "my-portfolio-dev-ec2"
+  proj_prefix = "my-portfolio-ecs-alb"
   environment = "dev"
   region = "us-east-1"
   
-  ingress_rules = [
-    {
-      from_port       = 80,
-      to_port         = 80,
-      protocol        = "tcp",
-      security_groups = [module.sg_alb.sg_id]
-    }, 
-    {
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      security_groups = [data.terraform_remote_state.ansible_ec2.outputs.sg.sg_id] 
-    }
-  ]
-
-  egress_rules = [
-    {
-      from_port   = 0,
-      to_port     = 0,
-      protocol    = "-1",
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  ]
-}
-module "sg_alb" {
-  source = "git::https://github.com/sae-org/terraform-modules.git//modules/sg?ref=main"
-  proj_prefix = "my-portfolio-dev-alb"
-  environment = "dev"
-  region = "us-east-1"
-
   ingress_rules = [
     {
       from_port   = 80,
@@ -107,6 +88,32 @@ module "sg_alb" {
     }
   ]
 }
+
+module "ecs_svc_sg" {
+  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/sg?ref=main"
+  proj_prefix = "my-portfolio-ecs-svc"
+  environment = "dev"
+  region = "us-east-1"
+
+  ingress_rules = [
+    {
+      from_port       = 80,
+      to_port         = 80,
+      protocol        = "tcp",
+      security_groups = [module.ecs_alb_sg.sg_id]
+    }, 
+  ]
+
+  egress_rules = [
+    {
+      from_port   = 0,
+      to_port     = 0,
+      protocol    = "-1",
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+}
+
 module "r53" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/r53?ref=main"
   create_domain = false

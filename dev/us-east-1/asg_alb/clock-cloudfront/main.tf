@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket       = "sae-s3-terraform-backend"          
-    key          = "dev/us-east-1/ec2/my-portfolio/terraform.tfstate" 
+    key          = "dev/us-east-1/asg/clock-cloudfront/terraform.tfstate" 
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true                           
@@ -12,33 +12,38 @@ terraform {
     }
   }
 }
+
 provider "aws" {
   region = "us-east-1"
   profile = "tf"
 }
-module "ec2" {
-  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/ec2?ref=main"
-  proj_prefix = "my-portfolio-dev"
+
+module "asg_clock_cloudfront" {
+  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/asg?ref=main"
+  proj_prefix = "clock-cloudfront"
+  ami = "ami-020cba7c55df1f615"
   environment = "dev"
   region = "us-east-1"
-  count = 1
   ins_type = "t2.micro"
-  ami = "ami-020cba7c55df1f615"
-  ec2_sg_id = [module.ec2_sg.sg_id]
-  iam_ins_profile = "my-portfolio-dev-profile"
-  associate_pub_ip = false
+  asg_sg_id = module.asg_ins_sg.sg_id
+  iam_ins_profile = "clock-cloudfront-profile"
+  pub_ip = false
+  tg_arns = module.alb_clock_cloudfront.tg_arns
+  min_size = 2
+  desired_capacity = 2
+  max_size = 2
 }
-module "alb" {
+
+module "alb_clock_cloudfront" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/lb?ref=main"
-  proj_prefix = "my-portfolio-dev"
-  create_tg_attachment = true 
+  proj_prefix = "clock-cloudfront"
   environment = "dev"
   region = "us-east-1"
   internal = false 
   lb_type = "application" 
-  security_groups = [module.sg_alb.sg_id]
-  cert_name = "saeeda.me"
-  target_id = module.ec2[0].instance_ids[0]
+  security_groups = [module.asg_alb_sg.sg_id]
+  cert_name = "*.saeeda.me"
+  create_tg_attachment = false 
   listener_ports = [
     { port = 80, protocol = "HTTP" },
     { port = 443, protocol = "HTTPS" }
@@ -46,10 +51,11 @@ module "alb" {
   tg_ports = [
     { port = 80, protocol = "HTTP" }
   ]
+  target_port = 80
 }
-module "ec2_sg" {
+module "asg_ins_sg" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/sg?ref=main"
-  proj_prefix = "my-portfolio-dev-ec2"
+  proj_prefix = "clock-cloudfront-asg-ins"
   environment = "dev"
   region = "us-east-1"
   
@@ -58,7 +64,7 @@ module "ec2_sg" {
       from_port       = 80,
       to_port         = 80,
       protocol        = "tcp",
-      security_groups = [module.sg_alb.sg_id]
+      security_groups = [module.asg_alb_sg.sg_id]
     }, 
     {
       from_port   = 22
@@ -77,9 +83,10 @@ module "ec2_sg" {
     }
   ]
 }
-module "sg_alb" {
+
+module "asg_alb_sg" {
   source = "git::https://github.com/sae-org/terraform-modules.git//modules/sg?ref=main"
-  proj_prefix = "my-portfolio-dev-alb"
+  proj_prefix = "clock-cloudfront-asg-alb"
   environment = "dev"
   region = "us-east-1"
 
@@ -106,21 +113,4 @@ module "sg_alb" {
       cidr_blocks = ["0.0.0.0/0"]
     }
   ]
-}
-module "r53" {
-  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/r53?ref=main"
-  create_domain = false
-  environment = "dev"
-  region = "us-east-1"
-  r53_records = {
-    "origin-a" = [{
-      name  = "saeeda.me"
-      type  = "A"
-      alias = {
-        name                   = module.alb.lb_dns
-        zone_id                = module.alb.lb_zone
-        evaluate_target_health = false
-      }
-    }]
-  }
 }

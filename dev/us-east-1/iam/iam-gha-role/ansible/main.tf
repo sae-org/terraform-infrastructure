@@ -47,22 +47,35 @@ module "iam_gha_ansible_controller" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ReadControllerSecrets"
+        Sid    = "ListAllSecretsForDiscovery"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:ListSecrets"
+        ]
+        Resource = "*"  # ListSecrets requires "*"
+      },
+
+      # 2) Read specific secrets 
+      {
+        Sid    = "ReadControllerAndManagedHostSecrets"
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
         Resource = [
+          # controller connection secrets
           "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/ssh_key_priv-*",
           "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/host-*",
           "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/user-*",
-          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/managed_hosts_ssh_keys/devops_portfolio-*",
-          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/controller/vault_file_secrets-*"
+
+          # managed host SSH keys for ALL projects (broadened)
+          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/managed_hosts_ssh_keys/*",
+
+          # vault 
+          "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:ansible/vault/*"
         ]
       }
     ]
   })
-
-  policy_attachment = []
 }
