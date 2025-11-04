@@ -109,7 +109,7 @@ module "iam_gha_my_portfolio" {
           "ecs:ListTagsForResource"
         ],
         Resource = "*"
-      }
+      },
 
       # --- ELBv2 describes (TG/LB lookups) ---
       {
@@ -238,8 +238,6 @@ module "iam_gha_my_portfolio" {
           "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/iam/ecs-role/*"
         ]
       }
-
-      # If you use a DynamoDB lock table for backend, add the DDB actions here.
     ]
   })
 }
