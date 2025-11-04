@@ -76,7 +76,7 @@ module "iam_gha_my_portfolio" {
         Resource = "arn:aws:ecr:${local.region}:${local.account_id}:repository/${local.ecr_repo}"
       },
 
-      # --- ECS task def + service ops ---
+      # --- ECS task def + service ops + tagging ---
       {
         Sid    = "EcsTaskDefOps",
         Effect = "Allow",
@@ -100,6 +100,16 @@ module "iam_gha_my_portfolio" {
         ],
         Resource = "*"
       },
+      {
+        Sid    = "EcsTagging",
+        Effect = "Allow",
+        Action = [
+          "ecs:TagResource",
+          "ecs:UntagResource",
+          "ecs:ListTagsForResource"
+        ],
+        Resource = "*"
+      }
 
       # --- ELBv2 describes (TG/LB lookups) ---
       {
