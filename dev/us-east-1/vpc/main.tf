@@ -30,8 +30,5 @@ module "network" {
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = "1"
     "kubernetes.io/cluster/eks-my-portfolio-cluster-dev" = "owned"
-}
-
-output "vpc" {
-  value = module.network
+  }
 }

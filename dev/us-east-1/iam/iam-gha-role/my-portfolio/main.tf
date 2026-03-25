@@ -37,7 +37,7 @@ module "iam_gha_my_portfolio" {
     Statement = [{
       Effect = "Allow"
       Action = "sts:AssumeRoleWithWebIdentity"
-      Principal = { Federated = data.terraform_remote_state.oidc_gha.outputs.oidc.oidc_arn }
+      Principal = { Federated = data.terraform_remote_state.gha_oidc.outputs.oidc.oidc_arn }
       Condition = {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
         StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/my-portfolio:ref:refs/heads/main" }

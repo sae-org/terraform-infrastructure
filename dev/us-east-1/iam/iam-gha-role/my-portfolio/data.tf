@@ -1,4 +1,4 @@
-data "terraform_remote_state" "oidc_gha" {
+data "terraform_remote_state" "gha_oidc" {
   backend = "s3"
   config = {
     bucket = "sae-s3-terraform-backend"
