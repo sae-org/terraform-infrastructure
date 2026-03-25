@@ -23,6 +23,13 @@ module "network" {
   env = "dev"
   cidr_block = "10.0.0.0/16"
   vpc_az = ["us-east-1a", "us-east-1b"]
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/cluster/eks-my-portfolio-cluster-dev" = "owned"
+  }
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/cluster/eks-my-portfolio-cluster-dev" = "owned"
 }
 
 output "vpc" {

@@ -24,8 +24,6 @@ locals {
   region     = "us-east-1"
   account_id = data.aws_caller_identity.current.account_id
   ecr_repo   = data.terraform_remote_state.ecr.outputs.ecr.ecr_repo_name
-  execution_role_arn   = data.terraform_remote_state.iam.outputs.iam.role_arn
-  task_role_arn       = data.terraform_remote_state.iam.outputs.iam.role_arn
 }
 
 module "iam_gha_my_portfolio" {
@@ -39,7 +37,7 @@ module "iam_gha_my_portfolio" {
     Statement = [{
       Effect = "Allow"
       Action = "sts:AssumeRoleWithWebIdentity"
-      Principal = { Federated = data.terraform_remote_state.oidc.outputs.oidc.oidc_arn }
+      Principal = { Federated = data.terraform_remote_state.oidc_gha.outputs.oidc.oidc_arn }
       Condition = {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
         StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sae-org/my-portfolio:ref:refs/heads/main" }
@@ -76,41 +74,6 @@ module "iam_gha_my_portfolio" {
         Resource = "arn:aws:ecr:${local.region}:${local.account_id}:repository/${local.ecr_repo}"
       },
 
-      # --- ECS task def + service ops + tagging ---
-      {
-        Sid    = "EcsTaskDefOps",
-        Effect = "Allow",
-        Action = [
-          "ecs:RegisterTaskDefinition",
-          "ecs:DeregisterTaskDefinition",
-          "ecs:DescribeTaskDefinition",
-          "ecs:ListTaskDefinitions"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "EcsServiceOps",
-        Effect = "Allow",
-        Action = [
-          "ecs:UpdateService",
-          "ecs:DescribeServices",
-          "ecs:ListServices",
-          "ecs:DescribeClusters",
-          "ecs:ListClusters"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "EcsTagging",
-        Effect = "Allow",
-        Action = [
-          "ecs:TagResource",
-          "ecs:UntagResource",
-          "ecs:ListTagsForResource"
-        ],
-        Resource = "*"
-      },
-
       # --- ELBv2 describes (TG/LB lookups) ---
       {
         Sid    = "Elbv2Reads",
@@ -141,20 +104,6 @@ module "iam_gha_my_portfolio" {
         Resource = "*"
       },
 
-      # --- Pass task & execution roles ---
-      {
-        Sid      = "PassTaskRoles",
-        Effect   = "Allow",
-        Action   = "iam:PassRole",
-        Resource = [
-          local.execution_role_arn,
-          local.task_role_arn
-        ],
-        Condition = {
-          StringEquals = { "iam:PassedToService" = "ecs-tasks.amazonaws.com" }
-        }
-      },
-
       # --- Secrets Manager (your CI/CD secret) ---
       {
         Sid      = "ReadCICDSecret",
@@ -179,18 +128,18 @@ module "iam_gha_my_portfolio" {
         Sid      = "LogsTagReadsForGroup",
         Effect   = "Allow",
         Action   = ["logs:ListTagsForResource"],
-        Resource = "arn:aws:logs:${local.region}:${local.account_id}:log-group:/ecs/my-portfolio-dev"
+        Resource = "*"                                       //"arn:aws:logs:${local.region}:${local.account_id}:log-group:/eks/my-portfolio-dev"
       },
       # 3) manage your specific group
       {
         Sid      = "LogsManageMyGroup",
         Effect   = "Allow",
         Action   = ["logs:CreateLogGroup","logs:PutRetentionPolicy"],
-        Resource = "arn:aws:logs:${local.region}:${local.account_id}:log-group:/ecs/my-portfolio-dev"
+        Resource = "*"                                    //"arn:aws:logs:${local.region}:${local.account_id}:log-group:/eks/my-portfolio-dev"
       },
 
       # --- Terraform backend + remote state prefixes ---
-      # List bucket for your ECS state prefix
+      # List bucket for your eks state prefix
       {
         Sid      = "TerraformStateS3List",
         Effect   = "Allow",
@@ -198,17 +147,17 @@ module "iam_gha_my_portfolio" {
         Resource = "arn:aws:s3:::sae-s3-terraform-backend",
         Condition = {
           StringLike = { "s3:prefix" = [
-            "dev/us-east-1/ecs/my-portfolio/*",
-            "dev/us-east-1/ecs/my-portfolio"
+            "dev/us-east-1/eks/my-portfolio/*",
+            "dev/us-east-1/eks/my-portfolio"
           ] }
         }
       },
-      # R/W on ECS state objects
+      # R/W on eks state objects
       {
-        Sid      = "TerraformStateObjectsEcs",
+        Sid      = "TerraformStateObjectsEks",
         Effect   = "Allow",
         Action   = ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
-        Resource = "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/ecs/my-portfolio/*"
+        Resource = "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/eks/my-portfolio/*"
       },
       # List bucket for the remote states you READ
       {
@@ -222,8 +171,8 @@ module "iam_gha_my_portfolio" {
             "dev/us-east-1/vpc",
             "dev/us-east-1/ecr/my-portfolio/*",
             "dev/us-east-1/ecr/my-portfolio",
-            "dev/us-east-1/iam/ecs-role/*",
-            "dev/us-east-1/iam/ecs-role"
+            "dev/us-east-1/iam/eks-role/*",
+            "dev/us-east-1/iam/eks-role"
           ] }
         }
       },
@@ -235,7 +184,7 @@ module "iam_gha_my_portfolio" {
         Resource = [
           "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/vpc/*",
           "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/ecr/my-portfolio/*",
-          "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/iam/ecs-role/*"
+          "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/iam/eks-role/*"
         ]
       }
     ]

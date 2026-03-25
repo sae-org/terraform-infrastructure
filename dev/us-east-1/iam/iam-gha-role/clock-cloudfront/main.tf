@@ -16,7 +16,6 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-  profile = "tf"
 }
 
 data "aws_caller_identity" "current" {}
@@ -94,6 +93,7 @@ module "iam_gha_clock_cloudfront" {
           "ecs:UpdateService",
           "ecs:DescribeServices",
           "ecs:ListServices",
+          "ecs:UpdateCluster", 
           "ecs:DescribeClusters",
           "ecs:ListClusters"
         ],

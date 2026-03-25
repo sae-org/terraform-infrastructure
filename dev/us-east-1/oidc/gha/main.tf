@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket       = "sae-s3-terraform-backend"          
-    key          = "dev/us-east-1/ecr/my-portfolio/terraform.tfstate" 
+    key          = "dev/us-east-1/oidc/gha/terraform.tfstate" 
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true                           
@@ -18,9 +18,8 @@ provider "aws" {
   profile = "tf"
 }
 
-module "ecr" {
-  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/ecr?ref=main"
-  proj_prefix = "my-portfolio-dev"
-  # image_tag = "dev"
+module "oidc" {
+  source   = "git::https://github.com/sae-org/terraform-modules.git//modules/oidc?ref=main"
+  odic_url                    = "https://token.actions.githubusercontent.com"
+  client_id_list              = ["sts.amazonaws.com"]
 }
-

@@ -34,6 +34,13 @@ locals {
     "APP_PORT" = "80"
     "EXECUTION_ROLE_ARN" = data.terraform_remote_state.iam.outputs.iam.role_arn
     "TASK_ROLE_ARN" = data.terraform_remote_state.iam.outputs.iam.role_arn
+    
+    # Database credentials for CI/CD
+    "DB_HOST"     = data.terraform_remote_state.rds.outputs.rds.address
+    "DB_NAME"     = "my_portfolio_dev_db"
+    "DB_USER"     = data.terraform_remote_state.rds.outputs.db_username
+    "DB_PASSWORD" = data.terraform_remote_state.rds.outputs.db_password
+    "DB_PORT"     = tostring(data.terraform_remote_state.rds.outputs.rds.port)
   }
 }
 

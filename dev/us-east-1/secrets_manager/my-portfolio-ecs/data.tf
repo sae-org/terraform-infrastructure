@@ -24,3 +24,12 @@ data "terraform_remote_state" "iam" {
     region = "us-east-1"
   }
 }
+
+data "terraform_remote_state" "rds" {
+  backend = "s3"
+  config = {
+    bucket = "sae-s3-terraform-backend"
+    key    = "dev/us-east-1/rds/my-portfolio/terraform.tfstate"
+    region = "us-east-1"
+  }
+}

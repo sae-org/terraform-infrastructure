@@ -28,8 +28,15 @@ module "ecs" {
     { name = "APP_ENV",          value = "dev" },
     { name = "PORT",             value = "8080" },   # keep in sync with app_port
     { name = "AWS_REGION",       value = "us-east-1" },
-    { name = "HEALTHCHECK_PATH", value = "/healthz" },
-    { name = "LOG_LEVEL",        value = "info" }
+    { name = "HEALTHCHECK_PATH", value = "/api/health" },
+    { name = "LOG_LEVEL",        value = "info" },
+    
+    # Database environment variables
+    { name = "DB_HOST",     value = data.terraform_remote_state.rds.outputs.rds.address },
+    { name = "DB_NAME",     value = "my_portfolio_dev_db" },
+    { name = "DB_USER",     value = data.terraform_remote_state.rds.outputs.db_username },
+    { name = "DB_PASSWORD", value = data.terraform_remote_state.rds.outputs.db_password },
+    { name = "DB_PORT",     value = tostring(data.terraform_remote_state.rds.outputs.rds.port) }
   ]
   aws_region = "us-east-1"
   private_subnet_ids = data.terraform_remote_state.vpc.outputs.vpc.pri_sub_id

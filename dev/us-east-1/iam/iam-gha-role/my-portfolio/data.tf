@@ -1,4 +1,4 @@
-data "terraform_remote_state" "oidc" {
+data "terraform_remote_state" "oidc_gha" {
   backend = "s3"
   config = {
     bucket = "sae-s3-terraform-backend"
@@ -20,7 +20,7 @@ data "terraform_remote_state" "iam" {
   backend = "s3"
   config = {
     bucket = "sae-s3-terraform-backend"
-    key    = "dev/us-east-1/iam/ecs-role/terraform.tfstate" 
+    key    = "dev/us-east-1/iam/eks-role/terraform.tfstate" 
     region = "us-east-1"
   }
 }
