@@ -104,13 +104,13 @@ module "iam_gha_my_portfolio" {
         Resource = "*"
       },
 
-      # --- Secrets Manager (your CI/CD secret) ---
-      {
-        Sid      = "ReadCICDSecret",
-        Effect   = "Allow",
-        Action   = ["secretsmanager:GetSecretValue","secretsmanager:DescribeSecret"],
-        Resource = "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:cicd/my-portfolio-*"
-      },
+      # # --- Secrets Manager (your CI/CD secret) ---
+      # {
+      #   Sid      = "ReadCICDSecret",
+      #   Effect   = "Allow",
+      #   Action   = ["secretsmanager:GetSecretValue","secretsmanager:DescribeSecret"],
+      #   Resource = "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:cicd/my-portfolio-*"
+      # },
 
       # --- CloudWatch Logs ---
       # 1) read/list need Resource="*"
@@ -171,8 +171,8 @@ module "iam_gha_my_portfolio" {
             "dev/us-east-1/vpc",
             "dev/us-east-1/ecr/my-portfolio/*",
             "dev/us-east-1/ecr/my-portfolio",
-            "dev/us-east-1/iam/eks-role/*",
-            "dev/us-east-1/iam/eks-role"
+            "dev/us-east-1/eks/my-portfolio/*",
+            "dev/us-east-1/eks/my-portfolio"
           ] }
         }
       },
@@ -184,7 +184,7 @@ module "iam_gha_my_portfolio" {
         Resource = [
           "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/vpc/*",
           "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/ecr/my-portfolio/*",
-          "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/iam/eks-role/*"
+          "arn:aws:s3:::sae-s3-terraform-backend/dev/us-east-1/eks/my-portfolio/*"
         ]
       }
     ]

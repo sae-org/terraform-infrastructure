@@ -20,6 +20,6 @@ provider "aws" {
 
 module "oidc" {
   source   = "git::https://github.com/sae-org/terraform-modules.git//modules/oidc?ref=main"
-  odic_url                    = "https://token.actions.githubusercontent.com"
+  oidc_url                    = "https://token.actions.githubusercontent.com"
   client_id_list              = ["sts.amazonaws.com"]
 }
